@@ -1,39 +1,85 @@
 import {
   type CommandInputMap,
   type CommandName,
-  type IssueTriageInput,
-  type PrSummaryInput,
+  type DisclosureDraftInput,
+  type PrRiskReviewInput,
   type PromptMessages,
-  type ReleaseNotesInput,
-  issueTriageInputSchema,
-  prSummaryInputSchema,
-  releaseNotesInputSchema
+  type SecurityTriageInput,
+  disclosureDraftInputSchema,
+  prRiskReviewInputSchema,
+  securityTriageInputSchema
 } from "./types.js";
+
+const defensiveSystemBoundary = [
+  "You support white-hat, defensive security work for open-source maintainers.",
+  "Do not provide exploit code, weaponized payloads, bypass steps, persistence, evasion, or instructions for unauthorized access.",
+  "Focus on safe triage, risk assessment, remediation planning, regression tests, and responsible disclosure."
+].join(" ");
 
 export function buildPrompt<TCommand extends CommandName>(
   command: TCommand,
   input: CommandInputMap[TCommand]
 ): PromptMessages {
   switch (command) {
-    case "pr-summary":
-      return buildPrSummaryPrompt(prSummaryInputSchema.parse(input));
-    case "issue-triage":
-      return buildIssueTriagePrompt(issueTriageInputSchema.parse(input));
-    case "release-notes":
-      return buildReleaseNotesPrompt(releaseNotesInputSchema.parse(input));
+    case "security-triage":
+      return buildSecurityTriagePrompt(securityTriageInputSchema.parse(input));
+    case "pr-risk-review":
+      return buildPrRiskReviewPrompt(prRiskReviewInputSchema.parse(input));
+    case "disclosure-draft":
+      return buildDisclosureDraftPrompt(disclosureDraftInputSchema.parse(input));
   }
 }
 
-function buildPrSummaryPrompt(input: PrSummaryInput): PromptMessages {
+function buildSecurityTriagePrompt(input: SecurityTriageInput): PromptMessages {
+  const components = formatList(input.affectedComponents, "No affected components provided");
+  const evidence = formatList(input.evidence, "No evidence provided");
+
+  return {
+    system: `${defensiveSystemBoundary} Act as a careful security triage partner for maintainers.`,
+    user: [
+      `Repository: ${input.repository}`,
+      `Report ID: ${input.reportId}`,
+      `Title: ${input.title}`,
+      `Reporter: ${input.reporter}`,
+      `Claimed severity: ${input.severityClaim ?? "not specified"}`,
+      "",
+      "Summary:",
+      input.summary,
+      "",
+      "Affected components:",
+      components,
+      "",
+      "Evidence:",
+      evidence,
+      "",
+      "Impact:",
+      input.impact,
+      "",
+      "Safe reproduction notes:",
+      input.reproductionNotes ?? "Only propose benign, local, permissioned verification steps.",
+      "",
+      "Requested outcome:",
+      input.requestedOutcome,
+      "",
+      "Return Markdown with sections: Triage Decision, Severity Rationale, Safe Reproduction Checklist, Remediation Questions, Responsible Maintainer Reply."
+    ].join("\n")
+  };
+}
+
+function buildPrRiskReviewPrompt(input: PrRiskReviewInput): PromptMessages {
   const files = input.files
-    .map((file) => `- ${file.path} (+${file.additions}/-${file.deletions})`)
+    .map((file) => {
+      const riskNotes = file.riskNotes ? `: ${file.riskNotes}` : "";
+      return `- ${file.path} (+${file.additions}/-${file.deletions})${riskNotes}`;
+    })
     .join("\n") || "- No file list provided";
-  const commits = input.commits.map((commit) => `- ${commit}`).join("\n") || "- No commits provided";
+  const dependencyChanges = formatList(input.dependencyChanges, "No dependency changes provided");
+  const sensitivePaths = formatList(input.securitySensitivePaths, "No security-sensitive paths identified");
   const labels = input.labels.join(", ") || "none";
 
   return {
     system:
-      "You are an open-source maintainer assistant. Summarize pull requests with practical review context, risks, and next actions.",
+      `${defensiveSystemBoundary} Act as a security reviewer performing defensive review of a pull request before maintainers merge it.`,
     user: [
       `Pull request: ${input.repository}#${input.number}`,
       `Title: ${input.title}`,
@@ -46,57 +92,49 @@ function buildPrSummaryPrompt(input: PrSummaryInput): PromptMessages {
       "Changed files:",
       files,
       "",
-      "Commits:",
-      commits,
+      "Dependency changes:",
+      dependencyChanges,
       "",
-      "Return Markdown with sections: Summary, Review Focus, Risk Notes, Suggested Maintainer Reply."
+      "Security-sensitive paths:",
+      sensitivePaths,
+      "",
+      "Return Markdown with sections: Risk Overview, Security Review Focus, Potential Vulnerability Classes, Tests To Request, Safe Maintainer Reply."
     ].join("\n")
   };
 }
 
-function buildIssueTriagePrompt(input: IssueTriageInput): PromptMessages {
-  const comments = input.comments.map((comment) => `- ${comment}`).join("\n") || "- No comments provided";
-  const labels = input.existingLabels.join(", ") || "none";
+function buildDisclosureDraftPrompt(input: DisclosureDraftInput): PromptMessages {
+  const versions = input.affectedVersions.join(", ") || "not specified";
+  const timeline = input.timeline.map((entry) => `- ${entry.date}: ${entry.event}`).join("\n") || "- No timeline provided";
 
   return {
     system:
-      "You are an open-source maintainer assistant focused on issue triage. Be concise, evidence-based, and helpful.",
-    user: [
-      `Issue: ${input.repository}#${input.number}`,
-      `Title: ${input.title}`,
-      `Author: ${input.author}`,
-      `Available labels: ${labels}`,
-      "",
-      "Body:",
-      input.body || "(empty)",
-      "",
-      "Comments:",
-      comments,
-      "",
-      "Return Markdown with sections: Triage Summary, Recommended labels, Missing Information, Suggested Maintainer Reply."
-    ].join("\n")
-  };
-}
-
-function buildReleaseNotesPrompt(input: ReleaseNotesInput): PromptMessages {
-  const changes = input.changes
-    .map((change) => {
-      const labels = change.labels.length > 0 ? ` [${change.labels.join(", ")}]` : "";
-      return `- #${change.number} ${change.title} by ${change.author}${labels}`;
-    })
-    .join("\n") || "- No changes provided";
-
-  return {
-    system:
-      "You are an open-source maintainer assistant that writes release notes for developers and contributors.",
+      `${defensiveSystemBoundary} Draft responsible disclosure material that must avoid operational exploit detail and helps users patch safely.`,
     user: [
       `Repository: ${input.repository}`,
-      `Release range: ${input.previousVersion} to ${input.version}`,
+      `Vulnerability: ${input.vulnerabilityTitle}`,
+      `Reporter: ${input.reporter}`,
+      `Affected versions: ${versions}`,
+      `Status: ${input.status}`,
+      `Fixed version: ${input.fixedVersion ?? "not available yet"}`,
       "",
-      "Merged changes:",
-      changes,
+      "Impact:",
+      input.impact,
       "",
-      "Group changes into Markdown sections: Highlights, Fixes, Maintenance, Contributors. Keep the tone factual."
+      "Mitigation:",
+      input.mitigation,
+      "",
+      "Timeline:",
+      timeline,
+      "",
+      "Credit preference:",
+      input.creditPreference ?? "Ask the reporter before publishing credit.",
+      "",
+      "Return Markdown with sections: Responsible Disclosure Draft, Advisory Summary, User Impact, Mitigations, Timeline, Coordinated Disclosure Notes."
     ].join("\n")
   };
+}
+
+function formatList(items: string[], empty: string): string {
+  return items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${empty}`;
 }

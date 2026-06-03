@@ -1,13 +1,13 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { ZodError } from "zod";
-import { generateMaintainerMarkdown } from "./openai.js";
+import { generateSecurityMarkdown } from "./openai.js";
 import { buildPrompt } from "./prompts.js";
 import {
   type CommandInputMap,
   type CommandName,
-  issueTriageInputSchema,
-  prSummaryInputSchema,
-  releaseNotesInputSchema
+  disclosureDraftInputSchema,
+  prRiskReviewInputSchema,
+  securityTriageInputSchema
 } from "./types.js";
 
 export type ExecuteCommandOptions = {
@@ -29,7 +29,7 @@ export async function executeCommand(options: ExecuteCommandOptions): Promise<Ex
   const input = parseCommandInput(options.command, rawInput);
   const prompt = buildPrompt(options.command, input);
   const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
-  const markdown = await generateMaintainerMarkdown({
+  const markdown = await generateSecurityMarkdown({
     command: options.command,
     prompt,
     apiKey,
@@ -60,12 +60,12 @@ function parseCommandInput<TCommand extends CommandName>(
 ): CommandInputMap[TCommand] {
   try {
     switch (command) {
-      case "pr-summary":
-        return prSummaryInputSchema.parse(input) as CommandInputMap[TCommand];
-      case "issue-triage":
-        return issueTriageInputSchema.parse(input) as CommandInputMap[TCommand];
-      case "release-notes":
-        return releaseNotesInputSchema.parse(input) as CommandInputMap[TCommand];
+      case "security-triage":
+        return securityTriageInputSchema.parse(input) as CommandInputMap[TCommand];
+      case "pr-risk-review":
+        return prRiskReviewInputSchema.parse(input) as CommandInputMap[TCommand];
+      case "disclosure-draft":
+        return disclosureDraftInputSchema.parse(input) as CommandInputMap[TCommand];
     }
   } catch (error) {
     if (error instanceof ZodError) {

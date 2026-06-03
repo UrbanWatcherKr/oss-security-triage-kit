@@ -1,0 +1,16 @@
+{
+  "repository": "open-source/security-demo",
+  "reportId": "SEC-2026-001",
+  "title": "Stored XSS in project dashboard",
+  "reporter": "whitehat-researcher",
+  "summary": "User-supplied project names may render without escaping in a dashboard view.",
+  "affectedComponents": ["dashboard", "project settings"],
+  "severityClaim": "high",
+  "evidence": [
+    "Screenshot shows benign script-marker execution in a maintainer-owned test instance.",
+    "No production user data was accessed."
+  ],
+  "impact": "A project editor may execute JavaScript in another maintainer session.",
+  "reproductionNotes": "Use a local test instance and a harmless marker string only.",
+  "requestedOutcome": "Confirm impact, assign severity, and prepare a responsible fix plan."
+}

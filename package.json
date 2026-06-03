@@ -1,15 +1,17 @@
 {
-  "name": "maintainer-copilot-kit",
+  "name": "oss-security-triage-kit",
   "version": "0.1.0",
-  "description": "OpenAI-powered CLI and GitHub Action starter kit for open-source maintainer automation.",
+  "description": "OpenAI-powered white-hat security triage CLI and GitHub Action starter kit for open-source maintainers.",
   "type": "module",
   "bin": {
-    "mck": "./dist/cli.js"
+    "ostk": "./dist/cli.js"
   },
   "files": [
     "dist",
     "examples",
     "README.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
     "LICENSE"
   ],
   "scripts": {
@@ -22,9 +24,12 @@
     "openai",
     "oss",
     "maintainer",
+    "security",
+    "whitehat",
+    "vulnerability-triage",
+    "responsible-disclosure",
     "github-action",
-    "triage",
-    "release-notes"
+    "triage"
   ],
   "author": "",
   "license": "MIT",
