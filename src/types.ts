@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const commandNames = ["pr-summary", "issue-triage", "release-notes"] as const;
+export const commandNames = ["security-triage", "pr-risk-review", "disclosure-draft"] as const;
 
 export type CommandName = (typeof commandNames)[number];
 
@@ -9,53 +9,65 @@ export type PromptMessages = {
   user: string;
 };
 
-const fileChangeSchema = z.object({
+const severitySchema = z.enum(["informational", "low", "medium", "high", "critical"]);
+
+export const securityTriageInputSchema = z.object({
+  repository: z.string().min(1),
+  reportId: z.string().min(1),
+  title: z.string().min(1),
+  reporter: z.string().min(1),
+  summary: z.string().min(1),
+  affectedComponents: z.array(z.string().min(1)).default([]),
+  severityClaim: severitySchema.optional(),
+  evidence: z.array(z.string().min(1)).default([]),
+  impact: z.string().min(1),
+  reproductionNotes: z.string().optional(),
+  requestedOutcome: z.string().default("Help the maintainer assess impact and plan a responsible fix.")
+});
+
+const changedFileSchema = z.object({
   path: z.string().min(1),
   additions: z.number().int().nonnegative(),
-  deletions: z.number().int().nonnegative()
+  deletions: z.number().int().nonnegative(),
+  riskNotes: z.string().optional()
 });
 
-export const prSummaryInputSchema = z.object({
+export const prRiskReviewInputSchema = z.object({
   repository: z.string().min(1),
   number: z.number().int().positive(),
   title: z.string().min(1),
   author: z.string().min(1),
   body: z.string().default(""),
-  files: z.array(fileChangeSchema).default([]),
-  commits: z.array(z.string()).default([]),
-  labels: z.array(z.string()).default([])
+  files: z.array(changedFileSchema).default([]),
+  dependencyChanges: z.array(z.string().min(1)).default([]),
+  securitySensitivePaths: z.array(z.string().min(1)).default([]),
+  labels: z.array(z.string().min(1)).default([])
 });
 
-export const issueTriageInputSchema = z.object({
+const timelineEventSchema = z.object({
+  date: z.string().min(1),
+  event: z.string().min(1)
+});
+
+export const disclosureDraftInputSchema = z.object({
   repository: z.string().min(1),
-  number: z.number().int().positive(),
-  title: z.string().min(1),
-  author: z.string().min(1),
-  body: z.string().default(""),
-  comments: z.array(z.string()).default([]),
-  existingLabels: z.array(z.string()).default([])
+  vulnerabilityTitle: z.string().min(1),
+  reporter: z.string().min(1),
+  affectedVersions: z.array(z.string().min(1)).default([]),
+  status: z.enum(["new", "triaged", "reproduced", "fixed", "published"]),
+  impact: z.string().min(1),
+  mitigation: z.string().min(1),
+  fixedVersion: z.string().optional(),
+  timeline: z.array(timelineEventSchema).default([]),
+  creditPreference: z.string().optional()
 });
 
-const releaseChangeSchema = z.object({
-  title: z.string().min(1),
-  number: z.number().int().positive(),
-  author: z.string().min(1),
-  labels: z.array(z.string()).default([])
-});
-
-export const releaseNotesInputSchema = z.object({
-  repository: z.string().min(1),
-  version: z.string().min(1),
-  previousVersion: z.string().min(1),
-  changes: z.array(releaseChangeSchema).default([])
-});
-
-export type PrSummaryInput = z.infer<typeof prSummaryInputSchema>;
-export type IssueTriageInput = z.infer<typeof issueTriageInputSchema>;
-export type ReleaseNotesInput = z.infer<typeof releaseNotesInputSchema>;
+export type SecurityTriageInput = z.infer<typeof securityTriageInputSchema>;
+export type PrRiskReviewInput = z.infer<typeof prRiskReviewInputSchema>;
+export type DisclosureDraftInput = z.infer<typeof disclosureDraftInputSchema>;
 
 export type CommandInputMap = {
-  "pr-summary": PrSummaryInput;
-  "issue-triage": IssueTriageInput;
-  "release-notes": ReleaseNotesInput;
+  "security-triage": SecurityTriageInput;
+  "pr-risk-review": PrRiskReviewInput;
+  "disclosure-draft": DisclosureDraftInput;
 };

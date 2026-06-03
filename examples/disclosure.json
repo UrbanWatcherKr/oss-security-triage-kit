@@ -1,0 +1,15 @@
+{
+  "repository": "open-source/security-demo",
+  "vulnerabilityTitle": "Improper authorization on project export",
+  "reporter": "whitehat-researcher",
+  "affectedVersions": ["1.4.0", "1.4.1"],
+  "status": "reproduced",
+  "impact": "A project member with read access may export metadata intended only for project admins.",
+  "mitigation": "Restrict the export endpoint to project admins and add authorization regression coverage.",
+  "fixedVersion": "1.4.2",
+  "timeline": [
+    { "date": "2026-06-01", "event": "Report received" },
+    { "date": "2026-06-03", "event": "Maintainer reproduced and prepared fix" }
+  ],
+  "creditPreference": "Credit reporter by GitHub username after confirmation."
+}

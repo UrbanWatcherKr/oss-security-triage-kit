@@ -7,7 +7,7 @@ import { executeCommand } from "../src/commands.js";
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(join(tmpdir(), "mck-"));
+  tempDir = await mkdtemp(join(tmpdir(), "ostk-"));
 });
 
 afterEach(async () => {
@@ -15,54 +15,58 @@ afterEach(async () => {
 });
 
 describe("executeCommand", () => {
-  test("returns deterministic dry-run Markdown for PR summaries", async () => {
-    const inputPath = join(tempDir, "pr.json");
+  test("returns deterministic dry-run Markdown for security triage", async () => {
+    const inputPath = join(tempDir, "security-report.json");
+    await writeFile(
+      inputPath,
+      JSON.stringify({
+        repository: "owner/project",
+        reportId: "SEC-2026-001",
+        title: "Stored XSS in project dashboard",
+        reporter: "whitehat-researcher",
+        summary: "Project names may render without escaping.",
+        affectedComponents: ["dashboard"],
+        severityClaim: "high",
+        evidence: ["No production user data was accessed."],
+        impact: "A project editor may execute JavaScript in a maintainer session.",
+        requestedOutcome: "Confirm impact and prepare fix plan."
+      }),
+      "utf8"
+    );
+
+    const result = await executeCommand({
+      command: "security-triage",
+      inputPath,
+      dryRun: true
+    });
+
+    expect(result.markdown).toContain("# Dry Run: Security Triage");
+    expect(result.markdown).toContain("SEC-2026-001");
+    expect(result.markdown).toContain("Stored XSS in project dashboard");
+    expect(result.wroteFile).toBe(false);
+  });
+
+  test("writes Markdown output for PR risk reviews", async () => {
+    const inputPath = join(tempDir, "risk.json");
+    const outputPath = join(tempDir, "risk.md");
     await writeFile(
       inputPath,
       JSON.stringify({
         repository: "owner/project",
         number: 42,
-        title: "Add cache warming",
+        title: "Refactor session middleware",
         author: "contributor",
-        body: "Adds a cache warmer for release pages.",
-        files: [{ path: "src/cache.ts", additions: 24, deletions: 3 }],
-        commits: ["feat: add cache warmer"],
-        labels: ["performance"]
+        body: "Changes how session cookies are parsed and refreshed.",
+        files: [{ path: "src/auth/session.ts", additions: 80, deletions: 30 }],
+        dependencyChanges: ["cookie-parser 1.4.6 -> 1.4.7"],
+        securitySensitivePaths: ["src/auth/session.ts"],
+        labels: ["auth"]
       }),
       "utf8"
     );
 
     const result = await executeCommand({
-      command: "pr-summary",
-      inputPath,
-      dryRun: true
-    });
-
-    expect(result.markdown).toContain("# Dry Run: PR Summary");
-    expect(result.markdown).toContain("owner/project#42");
-    expect(result.markdown).toContain("Add cache warming");
-    expect(result.wroteFile).toBe(false);
-  });
-
-  test("writes Markdown output when outputPath is provided", async () => {
-    const inputPath = join(tempDir, "issue.json");
-    const outputPath = join(tempDir, "issue.md");
-    await writeFile(
-      inputPath,
-      JSON.stringify({
-        repository: "owner/project",
-        number: 7,
-        title: "CLI crashes on empty input",
-        author: "reporter",
-        body: "Running the CLI with an empty file crashes.",
-        comments: ["I can reproduce this on Node 22."],
-        existingLabels: ["bug", "needs-repro", "docs"]
-      }),
-      "utf8"
-    );
-
-    const result = await executeCommand({
-      command: "issue-triage",
+      command: "pr-risk-review",
       inputPath,
       outputPath,
       dryRun: true
@@ -71,26 +75,26 @@ describe("executeCommand", () => {
     const output = await readFile(outputPath, "utf8");
     expect(result.wroteFile).toBe(true);
     expect(output).toBe(result.markdown);
-    expect(output).toContain("# Dry Run: Issue Triage");
+    expect(output).toContain("# Dry Run: PR Risk Review");
   });
 
-  test("throws a helpful error for invalid command input", async () => {
-    const inputPath = join(tempDir, "release.json");
+  test("throws a helpful error for invalid disclosure input", async () => {
+    const inputPath = join(tempDir, "disclosure.json");
     await writeFile(
       inputPath,
       JSON.stringify({
         repository: "owner/project",
-        version: "1.2.0"
+        vulnerabilityTitle: "Improper authorization on project export"
       }),
       "utf8"
     );
 
     await expect(
       executeCommand({
-        command: "release-notes",
+        command: "disclosure-draft",
         inputPath,
         dryRun: true
       })
-    ).rejects.toThrow("Invalid release-notes input");
+    ).rejects.toThrow("Invalid disclosure-draft input");
   });
 });

@@ -22,19 +22,19 @@ function createProgram(
   stdout: { write: (chunk: string) => unknown }
 ): Command {
   const program = new Command()
-    .name("mck")
-    .description("OpenAI-powered maintainer automation for pull requests, issues, and releases.")
+    .name("ostk")
+    .description("OpenAI-powered white-hat security triage for open-source maintainers.")
     .showHelpAfterError()
     .version("0.1.0");
 
-  addMaintainerCommand(program, "pr-summary", "Generate a maintainer-focused pull request summary.", execute, stdout);
-  addMaintainerCommand(program, "issue-triage", "Generate issue triage notes and label recommendations.", execute, stdout);
-  addMaintainerCommand(program, "release-notes", "Generate release notes from merged changes.", execute, stdout);
+  addSecurityCommand(program, "security-triage", "Triage a vulnerability report for responsible maintainer action.", execute, stdout);
+  addSecurityCommand(program, "pr-risk-review", "Review a pull request for security-sensitive risk before merge.", execute, stdout);
+  addSecurityCommand(program, "disclosure-draft", "Draft responsible disclosure and advisory material.", execute, stdout);
 
   return program;
 }
 
-function addMaintainerCommand(
+function addSecurityCommand(
   program: Command,
   command: CommandName,
   description: string,

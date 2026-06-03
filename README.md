@@ -1,20 +1,27 @@
-# Maintainer Copilot Kit
+# OSS Security Triage Kit
 
-OpenAI-powered CLI and GitHub Action starter kit for open-source maintainer automation.
+OpenAI-powered white-hat security triage CLI and GitHub Action starter kit for open-source maintainers.
 
-Maintainer Copilot Kit helps maintainers turn noisy repository activity into practical Markdown:
+OSS Security Triage Kit helps maintainers and independent security researchers turn sensitive security work into safe, useful Markdown:
 
-- Pull request summaries with review focus and risk notes
-- Issue triage notes with label recommendations
-- Release note drafts from merged changes
+- Vulnerability report triage with severity rationale and safe verification checklists
+- Pull request risk review for auth, dependency, middleware, and other security-sensitive changes
+- Responsible disclosure drafts that avoid operational exploit detail
 
-The CLI is safe to evaluate without an API key. By default, it falls back to a deterministic dry-run artifact that shows the prompt shape instead of calling OpenAI.
+The project is intentionally defensive. It does not generate exploit code, payloads, bypass instructions, persistence guidance, evasion advice, or steps for unauthorized access.
 
 ## Why This Exists
 
-Open-source maintainers spend real time on pull request review, issue triage, release notes, and contributor replies. This project packages those workflows into a small CLI that can be run locally or inside GitHub Actions.
+Open-source maintainers often receive incomplete vulnerability reports, risky pull requests, and time-sensitive disclosure questions. Independent white-hat researchers also need a structured way to report findings without drifting into unsafe detail.
 
-It is designed to fit maintainer automation and release workflow use cases, including the kind of work described by OpenAI's Codex for Open Source program. It does not guarantee credits or program acceptance; it gives a project a clear, useful OSS maintenance automation story.
+This kit is designed around responsible security workflows:
+
+- Help maintainers understand credible risk quickly
+- Help white-hat researchers communicate impact safely
+- Help projects prepare fixes, regression tests, and advisories
+- Make ethical bug bounty and AI red-team work easier to do within clear boundaries
+
+It is a better fit for Codex Security than a generic maintainer assistant because its core workflows are security triage, PR risk review, and responsible disclosure.
 
 ## Install
 
@@ -26,113 +33,113 @@ npm run build
 For local development:
 
 ```bash
-npm run dev -- pr-summary --input examples/pr.json --dry-run
+npm run dev -- security-triage --input examples/security-report.json --dry-run
 ```
 
 After building:
 
 ```bash
-node dist/cli.js pr-summary --input examples/pr.json --dry-run
+node dist/cli.js security-triage --input examples/security-report.json --dry-run
 ```
 
 ## Commands
 
-### PR Summary
+### Security Triage
 
 ```bash
-mck pr-summary --input examples/pr.json --dry-run
+ostk security-triage --input examples/security-report.json --dry-run
 ```
 
-### Issue Triage
+Produces a defensive triage artifact with:
+
+- Triage Decision
+- Severity Rationale
+- Safe Reproduction Checklist
+- Remediation Questions
+- Responsible Maintainer Reply
+
+### PR Risk Review
 
 ```bash
-mck issue-triage --input examples/issue.json --dry-run
+ostk pr-risk-review --input examples/pr-risk.json --dry-run
 ```
 
-### Release Notes
+Produces a security review artifact with:
+
+- Risk Overview
+- Security Review Focus
+- Potential Vulnerability Classes
+- Tests To Request
+- Safe Maintainer Reply
+
+### Disclosure Draft
 
 ```bash
-mck release-notes --input examples/release.json --dry-run
+ostk disclosure-draft --input examples/disclosure.json --dry-run
 ```
+
+Produces responsible disclosure material with:
+
+- Responsible Disclosure Draft
+- Advisory Summary
+- User Impact
+- Mitigations
+- Timeline
+- Coordinated Disclosure Notes
 
 Write output to a file:
 
 ```bash
-mck release-notes --input examples/release.json --output release-notes.md --dry-run
+ostk disclosure-draft --input examples/disclosure.json --output disclosure.md --dry-run
 ```
 
 ## Live OpenAI Generation
 
-Set an API key and omit `--dry-run`.
-
-Set `OPENAI_API_KEY` in your shell or CI secret store, then run:
+Set `OPENAI_API_KEY` in your shell or CI secret store, then omit `--dry-run`.
 
 ```bash
-mck issue-triage --input examples/issue.json --output issue-triage.md
+ostk security-triage --input examples/security-report.json --output triage.md
 ```
 
 The default model is `gpt-4.1-mini`. Override it with:
 
 ```bash
 export OPENAI_MODEL="gpt-4.1-mini"
-mck pr-summary --input examples/pr.json
+ostk pr-risk-review --input examples/pr-risk.json
 ```
 
 or:
 
 ```bash
-mck pr-summary --input examples/pr.json --model gpt-4.1-mini
-```
-
-## Input Shapes
-
-### Pull Request
-
-```json
-{
-  "repository": "owner/project",
-  "number": 42,
-  "title": "Add cache warming",
-  "author": "contributor",
-  "body": "Adds a cache warmer for release pages.",
-  "files": [{ "path": "src/cache.ts", "additions": 24, "deletions": 3 }],
-  "commits": ["feat: add cache warmer"],
-  "labels": ["performance"]
-}
-```
-
-### Issue
-
-```json
-{
-  "repository": "owner/project",
-  "number": 7,
-  "title": "CLI crashes on empty input",
-  "author": "reporter",
-  "body": "Running the CLI with an empty file crashes.",
-  "comments": ["I can reproduce this on Node 22."],
-  "existingLabels": ["bug", "needs-repro", "docs"]
-}
-```
-
-### Release
-
-```json
-{
-  "repository": "owner/project",
-  "version": "1.2.0",
-  "previousVersion": "1.1.0",
-  "changes": [
-    { "title": "Add cache warming", "number": 42, "author": "contributor", "labels": ["performance"] }
-  ]
-}
+ostk pr-risk-review --input examples/pr-risk.json --model gpt-4.1-mini
 ```
 
 ## GitHub Actions
 
-Copy `.github/workflows/maintainer-copilot.yml` into a repository that has this package installed or checked out. On pull requests, the example workflow reads PR metadata, generates a PR summary artifact, and uses `OPENAI_API_KEY` from repository secrets when available. On manual runs, it creates dry-run sample artifacts.
+The included workflow reads pull request metadata, builds a PR risk-review input, and generates a Markdown artifact. If `OPENAI_API_KEY` is configured as a repository secret, it produces a live AI review artifact. Without a key, it safely creates a dry-run prompt preview.
 
-It intentionally avoids posting comments or mutating labels in the first version.
+The workflow uses read-only repository permissions and intentionally avoids posting comments, changing labels, or mutating repository state.
+
+## Safety Boundary
+
+Allowed:
+
+- Defensive triage
+- Risk summaries
+- Safe reproduction checklists
+- Remediation questions
+- Regression test suggestions
+- Responsible disclosure drafts
+
+Not allowed by project design:
+
+- Exploit construction
+- Weaponized payloads
+- Bypass or evasion steps
+- Persistence or privilege abuse guidance
+- Instructions for unauthorized access
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure guidance and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution safety rules.
 
 ## Development
 
@@ -141,6 +148,10 @@ npm test
 npm run typecheck
 npm run build
 ```
+
+## OpenAI OSS Program Positioning
+
+This repository is meant to support responsible open-source security work. Codex Security would help review risky pull requests, vulnerability reports, and remediation plans. API credits would support safe triage artifacts, disclosure drafts, and maintainer-facing security summaries.
 
 ## License
 

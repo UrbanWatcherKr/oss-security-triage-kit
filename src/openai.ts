@@ -11,7 +11,7 @@ export type GenerateMarkdownOptions = {
   model?: string;
 };
 
-export async function generateMaintainerMarkdown(options: GenerateMarkdownOptions): Promise<string> {
+export async function generateSecurityMarkdown(options: GenerateMarkdownOptions): Promise<string> {
   if (options.dryRun || !options.apiKey) {
     return buildDryRunMarkdown(options.command, options.prompt);
   }
@@ -38,7 +38,7 @@ function buildDryRunMarkdown(command: CommandName, prompt: PromptMessages): stri
   return [
     `# Dry Run: ${toDisplayName(command)}`,
     "",
-    "No OpenAI request was made. Set `OPENAI_API_KEY` and omit `--dry-run` to generate live maintainer output.",
+    "No OpenAI request was made. Set `OPENAI_API_KEY` and omit `--dry-run` to generate live defensive security output.",
     "",
     "## Prompt Preview",
     "",
@@ -55,11 +55,11 @@ function buildDryRunMarkdown(command: CommandName, prompt: PromptMessages): stri
 
 function toDisplayName(command: CommandName): string {
   switch (command) {
-    case "pr-summary":
-      return "PR Summary";
-    case "issue-triage":
-      return "Issue Triage";
-    case "release-notes":
-      return "Release Notes";
+    case "security-triage":
+      return "Security Triage";
+    case "pr-risk-review":
+      return "PR Risk Review";
+    case "disclosure-draft":
+      return "Disclosure Draft";
   }
 }

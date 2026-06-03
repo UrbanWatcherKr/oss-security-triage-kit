@@ -1,0 +1,14 @@
+{
+  "repository": "open-source/security-demo",
+  "number": 42,
+  "title": "Refactor session middleware",
+  "author": "contributor",
+  "body": "Changes how session cookies are parsed, refreshed, and attached to request context.",
+  "files": [
+    { "path": "src/auth/session.ts", "additions": 80, "deletions": 30, "riskNotes": "Touches cookie parsing and renewal." },
+    { "path": "src/middleware.ts", "additions": 25, "deletions": 11, "riskNotes": "Changes request authorization flow." }
+  ],
+  "dependencyChanges": ["cookie-parser 1.4.6 -> 1.4.7"],
+  "securitySensitivePaths": ["src/auth/session.ts", "src/middleware.ts"],
+  "labels": ["auth", "security-review"]
+}
