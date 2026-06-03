@@ -1,0 +1,42 @@
+{
+  "name": "maintainer-copilot-kit",
+  "version": "0.1.0",
+  "description": "OpenAI-powered CLI and GitHub Action starter kit for open-source maintainer automation.",
+  "type": "module",
+  "bin": {
+    "mck": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "openai",
+    "oss",
+    "maintainer",
+    "github-action",
+    "triage",
+    "release-notes"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^15.0.0",
+    "openai": "^6.41.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}

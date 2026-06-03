@@ -1,0 +1,12 @@
+{
+  "repository": "open-source/maintainer-demo",
+  "number": 7,
+  "title": "CLI crashes on empty input file",
+  "author": "reporter",
+  "body": "Running the CLI with an empty JSON file exits with a stack trace instead of a helpful message.",
+  "comments": [
+    "I can reproduce this on Node 22.",
+    "Expected behavior: print a validation error and exit non-zero."
+  ],
+  "existingLabels": ["bug", "needs-repro", "docs", "enhancement"]
+}

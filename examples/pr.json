@@ -1,0 +1,16 @@
+{
+  "repository": "open-source/maintainer-demo",
+  "number": 42,
+  "title": "Add cache warming for release pages",
+  "author": "contributor",
+  "body": "Adds a cache warmer that preloads release pages after publish.",
+  "files": [
+    { "path": "src/cache.ts", "additions": 24, "deletions": 3 },
+    { "path": "tests/cache.test.ts", "additions": 18, "deletions": 0 }
+  ],
+  "commits": [
+    "feat: warm release page cache",
+    "test: cover cache warmer"
+  ],
+  "labels": ["performance", "release"]
+}
